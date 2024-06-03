@@ -11,9 +11,7 @@ const App = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [user, setUser] = useState(null)
-  const [title, setTitle] = useState('')
-  const [author, setAuthor] = useState('')
-  const [url, setUrl] = useState('')
+
   const [message, setMessage] = useState(null)
 
   useEffect(() => {
@@ -43,7 +41,7 @@ const App = () => {
     } catch (error) {
       const messageObject = {
         text: 'Wrong username or password',
-        type: 'error',
+        type: 'error'
       }
       setMessage(messageObject)
       setTimeout(() => {
@@ -55,31 +53,22 @@ const App = () => {
     window.localStorage.removeItem('loggedBlogUser')
     setUser(null)
   }
-  const createBlog = async (event) => {
-    event.preventDefault()
-    const blogObject = {
-      title: title,
-      author: author,
-      url: url,
-    }
+  const createBlog = async (blogObject) => {
     try {
       const response = await blogService.create(blogObject)
       setBlogs(blogs.concat(response))
       const messageObject = {
-        text: `a new blog ${title} by ${author} added`,
-        type: 'success',
+        text: `a new blog ${blogObject.title} by ${blogObject.author} added`,
+        type: 'success'
       }
       setMessage(messageObject)
       setTimeout(() => {
         setMessage(null)
       }, 5000)
-      setAuthor('')
-      setTitle('')
-      setUrl('')
     } catch (error) {
       const messageObject = {
-        text: error.message,
-        type: 'error',
+        text: error.response.data.error,
+        type: 'error'
       }
       setMessage(messageObject)
       setTimeout(() => {
@@ -122,7 +111,7 @@ const App = () => {
     }
     const updatedBlog = {
       ...likedBlog,
-      likes: likedBlog.likes + 1,
+      likes: likedBlog.likes + 1
     }
     try {
       const response = await blogService.update(id, updatedBlog)
@@ -153,7 +142,7 @@ const App = () => {
         setBlogs(newBlogs)
         setMessage({
           text: `Blog ${blogToDelete.title} deleted`,
-          type: 'success',
+          type: 'success'
         })
         setTimeout(() => setMessage(null), 5000)
       } catch (error) {
@@ -173,15 +162,7 @@ const App = () => {
       <button onClick={handleLogout}>logout</button>
 
       <Togglable buttonLabel="new blog">
-        <BlogForm
-          createBlog={createBlog}
-          author={author}
-          setAuthor={setAuthor}
-          title={title}
-          setTitle={setTitle}
-          url={url}
-          setUrl={setUrl}
-        />
+        <BlogForm createBlog={createBlog} />
       </Togglable>
       {blogs.map((blog) => (
         <Blog

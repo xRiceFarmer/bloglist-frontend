@@ -5,15 +5,15 @@ const Blog = ({ blog, handleLikes, deleteBlog, showRemove }) => {
     paddingLeft: 2,
     border: 'solid',
     borderWidth: 1,
-    marginBottom: 5,
+    marginBottom: 5
   }
   return (
     <div style={blogStyle}>
-      {blog.title} {blog.author}
+      <div>{blog.title}</div>
+      <div>{blog.author}</div>
       <Togglable buttonLabel="view">
         <div>{blog.url}</div>
         <div>
-          {' '}
           likes {blog.likes}
           <button onClick={() => handleLikes(blog.id)}>like</button>
         </div>
