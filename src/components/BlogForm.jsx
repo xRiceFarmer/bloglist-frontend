@@ -1,4 +1,12 @@
-const BlogForm = ({ createBlog, title, author, url, setAuthor, setTitle, setUrl }) => {
+const BlogForm = ({
+  createBlog,
+  title,
+  author,
+  url,
+  setAuthor,
+  setTitle,
+  setUrl,
+}) => {
   return (
     <div>
       <h2>create new</h2>
@@ -33,7 +41,7 @@ const BlogForm = ({ createBlog, title, author, url, setAuthor, setTitle, setUrl 
         <button type="submit">create</button>
       </form>
     </div>
-  );
-};
+  )
+}
 
 export default BlogForm

@@ -1,23 +1,29 @@
-import Togglable from "./Togglable";
-const Blog = ({ blog }) => {
+import Togglable from './Togglable'
+const Blog = ({ blog, handleLikes, deleteBlog, showRemove }) => {
   const blogStyle = {
     paddingTop: 10,
     paddingLeft: 2,
-    border: "solid",
+    border: 'solid',
     borderWidth: 1,
     marginBottom: 5,
-  };
+  }
   return (
     <div style={blogStyle}>
       {blog.title} {blog.author}
       <Togglable buttonLabel="view">
         <div>{blog.url}</div>
-        <div> likes {blog.likes}</div>
+        <div>
+          {' '}
+          likes {blog.likes}
+          <button onClick={() => handleLikes(blog.id)}>like</button>
+        </div>
+        {!showRemove && (
+          <button onClick={() => deleteBlog(blog.id)}>remove</button>
+        )}
         <div>
           {blog.user ? (
             <>
-              <p>Username: {blog.user.username}</p>
-              <p>Name: {blog.user.name}</p>
+              <div>{blog.user.name}</div>
             </>
           ) : (
             <p>No user information available</p>
@@ -25,6 +31,6 @@ const Blog = ({ blog }) => {
         </div>
       </Togglable>
     </div>
-  );
-};
-export default Blog;
+  )
+}
+export default Blog
