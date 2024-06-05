@@ -8,17 +8,17 @@ const Blog = ({ blog, handleLikes, deleteBlog, showRemove }) => {
     marginBottom: 5
   }
   return (
-    <div style={blogStyle}>
-      <div>{blog.title}</div>
-      <div>{blog.author}</div>
+    <div style={blogStyle} className='blog-container'>
+      <div className='title'>{blog.title}</div>
+      <div className='author'>{blog.author}</div>
       <Togglable buttonLabel="view">
         <div>{blog.url}</div>
         <div>
           likes {blog.likes}
-          <button onClick={() => handleLikes(blog.id)}>like</button>
+          <button name='like' onClick={() => handleLikes(blog.id)}>like</button>
         </div>
-        {!showRemove && (
-          <button onClick={() => deleteBlog(blog.id)}>remove</button>
+        {showRemove && (
+          <button name='remove' onClick={() => deleteBlog(blog.id)}>remove</button>
         )}
         <div>
           {blog.user ? (

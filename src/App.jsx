@@ -84,6 +84,7 @@ const App = () => {
         <div>
           username
           <input
+            data-testid="username"
             type="text"
             value={username}
             name="Username"
@@ -93,13 +94,16 @@ const App = () => {
         <div>
           password
           <input
+            data-testid="password"
             type="password"
             value={password}
             name="Password"
             onChange={({ target }) => setPassword(target.value)}
           />
         </div>
-        <button type="submit">login</button>
+        <button type="submit" name="login">
+          login
+        </button>
       </form>
     </div>
   )
@@ -165,13 +169,13 @@ const App = () => {
         <BlogForm createBlog={createBlog} />
       </Togglable>
       {blogs.map((blog) => (
-        <Blog
-          key={blog.id}
-          blog={blog}
-          handleLikes={handleLikes}
-          deleteBlog={deleteBlog}
-          showRemove={blog.user === user._id}
-        />
+          <Blog
+            key={blog.id}
+            blog={blog}
+            handleLikes={handleLikes}
+            deleteBlog={deleteBlog}
+            showRemove={blog.user.name === user.name}
+          />
       ))}
     </div>
   )
