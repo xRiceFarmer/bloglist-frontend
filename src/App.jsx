@@ -5,21 +5,33 @@ import loginService from './services/login'
 import Notification from './components/Notification'
 import Togglable from './components/Togglable'
 import BlogForm from './components/BlogForm'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useNotification } from './contexts/NotificationContext'
 
 const App = () => {
-  const [blogs, setBlogs] = useState([])
+  //const [blogs, setBlogs] = useState([])
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [user, setUser] = useState(null)
+  const [notification, setNotification] = useNotification()
 
-  const [message, setMessage] = useState(null)
+  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    blogService.getAll().then((blogs) => {
-      const sortedBlog = blogs.sort((a, b) => b.likes - a.likes)
-      setBlogs(sortedBlog)
-    })
-  }, [])
+  const newBlogMutation = useMutation({
+    mutationFn: blogService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ['blogs']})
+    }
+  })
+  
+  const {data: blogs, isLoading, isError} = useQuery({
+    queryKey: ['blogs'],
+    queryFn: async () => {
+      const blogs = await blogService.getAll()
+      return blogs.sort((a,b) => b.likes - a.likes)
+    }
+  })
+
   useEffect(() => {
     const loggedUserJSON = window.localStorage.getItem('loggedBlogUser')
     if (loggedUserJSON) {
@@ -43,10 +55,7 @@ const App = () => {
         text: 'Wrong username or password',
         type: 'error'
       }
-      setMessage(messageObject)
-      setTimeout(() => {
-        setMessage(null)
-      }, 5000)
+      setNotification(messageObject)
     }
   }
   const handleLogout = (event) => {
@@ -55,30 +64,23 @@ const App = () => {
   }
   const createBlog = async (blogObject) => {
     try {
-      const response = await blogService.create(blogObject)
-      setBlogs(blogs.concat(response))
+      await newBlogMutation.mutateAsync(blogObject)
       const messageObject = {
         text: `a new blog ${blogObject.title} by ${blogObject.author} added`,
         type: 'success'
       }
-      setMessage(messageObject)
-      setTimeout(() => {
-        setMessage(null)
-      }, 5000)
+      setNotification(messageObject)
     } catch (error) {
       const messageObject = {
         text: error.response.data.error,
         type: 'error'
       }
-      setMessage(messageObject)
-      setTimeout(() => {
-        setMessage(null)
-      }, 5000)
+      setNotification(messageObject)
     }
   }
   const loginForm = () => (
     <div>
-      <Notification message={message} />
+      <Notification message={notification} />
 
       <form onSubmit={handleLogin}>
         <div>
@@ -118,12 +120,8 @@ const App = () => {
       likes: likedBlog.likes + 1
     }
     try {
-      const response = await blogService.update(id, updatedBlog)
-      setBlogs(
-        blogs
-          .map((blog) => (blog.id === id ? response : blog))
-          .sort((a, b) => b.likes - a.likes)
-      )
+     await blogService.update(id, updatedBlog)
+      queryClient.invalidateQueries({queryKey : ['blogs']})
     } catch (error) {
       console.log('Error updating likes', error)
     }
@@ -140,27 +138,31 @@ const App = () => {
     if (confirmDelete) {
       try {
         await blogService.remove(id)
-        const newBlogs = blogs
-          .filter((blog) => blog.id !== id)
-          .sort((a, b) => b.likes - a.likes)
-        setBlogs(newBlogs)
-        setMessage({
+        queryClient.invalidateQueries({queryKey : ['blogs']})
+
+        setNotification({
           text: `Blog ${blogToDelete.title} deleted`,
           type: 'success'
         })
-        setTimeout(() => setMessage(null), 5000)
       } catch (error) {
-        setMessage({ text: error.message, type: 'error' })
-        setTimeout(() => setMessage(null), 5000)
+        setNotification({ text: error.message, type: 'error' })
       }
     }
   }
   if (user === null) {
     return loginForm()
   }
+  if (isLoading) {
+    return <div>Loading...</div>
+  }
+
+  if (isError) {
+    return <div>Error fetching blogs</div>
+  }
+
   return (
     <div>
-      <Notification message={message} />
+      <Notification message={notification} />
       <h2>blogs</h2>
       <p>{user.name} logged in</p>
       <button onClick={handleLogout}>logout</button>
@@ -168,7 +170,7 @@ const App = () => {
       <Togglable buttonLabel="new blog">
         <BlogForm createBlog={createBlog} />
       </Togglable>
-      {blogs.map((blog) => (
+      {blogs && blogs.map((blog) => (
           <Blog
             key={blog.id}
             blog={blog}
