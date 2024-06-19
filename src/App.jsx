@@ -8,38 +8,47 @@ import BlogForm from './components/BlogForm'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNotification } from './contexts/NotificationContext'
 
+import { useUser } from './contexts/UserContext'
+
+import UserList from './components/UserList'
+
+import { Routes, Route, Link, useMatch } from 'react-router-dom'
+
 const App = () => {
-  //const [blogs, setBlogs] = useState([])
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [user, setUser] = useState(null)
   const [notification, setNotification] = useNotification()
+  const { state, dispatch } = useUser()
+  const { user, username, password } = state
 
   const queryClient = useQueryClient()
 
   const newBlogMutation = useMutation({
     mutationFn: blogService.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({queryKey: ['blogs']})
+      queryClient.invalidateQueries({ queryKey: ['blogs'] })
     }
   })
-  
-  const {data: blogs, isLoading, isError} = useQuery({
+
+  const {
+    data: blogs,
+    isLoading,
+    isError
+  } = useQuery({
     queryKey: ['blogs'],
     queryFn: async () => {
       const blogs = await blogService.getAll()
-      return blogs.sort((a,b) => b.likes - a.likes)
+      return blogs.sort((a, b) => b.likes - a.likes)
     }
   })
+  
 
   useEffect(() => {
     const loggedUserJSON = window.localStorage.getItem('loggedBlogUser')
     if (loggedUserJSON) {
       const user = JSON.parse(loggedUserJSON)
-      setUser(user)
+      dispatch({ type: 'SET_USER', payload: user })
       blogService.setToken(user.token)
     }
-  }, [])
+  }, [dispatch])
 
   const handleLogin = async (event) => {
     event.preventDefault()
@@ -47,9 +56,9 @@ const App = () => {
       const user = await loginService.login({ username, password })
       window.localStorage.setItem('loggedBlogUser', JSON.stringify(user))
       blogService.setToken(user.token)
-      setUser(user)
-      setUsername('')
-      setPassword('')
+      dispatch({ type: 'SET_USER', payload: user })
+      dispatch({ type: 'SET_USERNAME', payload: '' })
+      dispatch({ type: 'SET_PASSWORD', payload: '' })
     } catch (error) {
       const messageObject = {
         text: 'Wrong username or password',
@@ -60,7 +69,7 @@ const App = () => {
   }
   const handleLogout = (event) => {
     window.localStorage.removeItem('loggedBlogUser')
-    setUser(null)
+    dispatch({ type: 'CLEAR_USER' })
   }
   const createBlog = async (blogObject) => {
     try {
@@ -90,7 +99,9 @@ const App = () => {
             type="text"
             value={username}
             name="Username"
-            onChange={({ target }) => setUsername(target.value)}
+            onChange={({ target }) =>
+              dispatch({ type: 'SET_USERNAME', payload: target.value })
+            }
           />
         </div>
         <div>
@@ -100,7 +111,9 @@ const App = () => {
             type="password"
             value={password}
             name="Password"
-            onChange={({ target }) => setPassword(target.value)}
+            onChange={({ target }) =>
+              dispatch({ type: 'SET_PASSWORD', payload: target.value })
+            }
           />
         </div>
         <button type="submit" name="login">
@@ -120,8 +133,8 @@ const App = () => {
       likes: likedBlog.likes + 1
     }
     try {
-     await blogService.update(id, updatedBlog)
-      queryClient.invalidateQueries({queryKey : ['blogs']})
+      await blogService.update(id, updatedBlog)
+      queryClient.invalidateQueries({ queryKey: ['blogs'] })
     } catch (error) {
       console.log('Error updating likes', error)
     }
@@ -138,7 +151,7 @@ const App = () => {
     if (confirmDelete) {
       try {
         await blogService.remove(id)
-        queryClient.invalidateQueries({queryKey : ['blogs']})
+        queryClient.invalidateQueries({ queryKey: ['blogs'] })
 
         setNotification({
           text: `Blog ${blogToDelete.title} deleted`,
@@ -149,7 +162,11 @@ const App = () => {
       }
     }
   }
-  if (user === null) {
+  
+  const match = useMatch('/blogs/:id')
+  const blog = match ? blogs.find((blog) => blog.id === match.params.id) : null
+  
+  if (!user) {
     return loginForm()
   }
   if (isLoading) {
@@ -160,25 +177,72 @@ const App = () => {
     return <div>Error fetching blogs</div>
   }
 
+  
+
+
   return (
     <div>
+       <nav>
+          <Link to="/">Home</Link>
+          <Link to="/users">Users</Link>
+          {user && (
+          <div>
+            <p>{user.name} logged in</p>
+            <button onClick={handleLogout}>logout</button>
+          </div>
+        )}
+        </nav>
       <Notification message={notification} />
-      <h2>blogs</h2>
-      <p>{user.name} logged in</p>
-      <button onClick={handleLogout}>logout</button>
-
-      <Togglable buttonLabel="new blog">
-        <BlogForm createBlog={createBlog} />
-      </Togglable>
-      {blogs && blogs.map((blog) => (
-          <Blog
-            key={blog.id}
-            blog={blog}
-            handleLikes={handleLikes}
-            deleteBlog={deleteBlog}
-            showRemove={blog.user.name === user.name}
-          />
-      ))}
+      <h2>blogs app</h2>
+      <Routes>
+        <Route path="/users/*" element={<UserList />} />
+        <Route
+          path="/"
+          element={
+            <>
+              <Togglable buttonLabel="new blog">
+                <BlogForm createBlog={createBlog} />
+              </Togglable>
+              {blogs &&
+                blogs.map((blog) => (
+                  <Blog
+                    key={blog.id}
+                    blog={blog}
+                  />
+                ))}
+            </>
+          }
+        />
+        <Route
+          path="/blogs/:id"
+          element={ blog &&
+            <>
+              <h1>{blog.title} by {blog.author}</h1>
+              <div>{blog.url}</div>
+              <div>
+                likes {blog.likes}
+                <button name="like" onClick={() => handleLikes(blog.id)}>
+                  like
+                </button>
+              </div>
+              {blog.user.name === user.name && (
+                <button name="remove" onClick={() => deleteBlog(blog.id)}>
+                  remove
+                </button>
+              )}
+              <div>
+                {blog.user ? (
+                  <>
+                    <div>{blog.user.name}</div>
+                  </>
+                ) : (
+                  <p>No user information available</p>
+                )}
+              </div>
+            </>
+          }
+        />
+      </Routes>
     </div>
   )
 }
