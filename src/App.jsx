@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import Blog from './components/Blog'
+import BlogDetail from './components/BlogDetail'
 import blogService from './services/blogs'
 import loginService from './services/login'
 import Notification from './components/Notification'
@@ -7,6 +8,7 @@ import Togglable from './components/Togglable'
 import BlogForm from './components/BlogForm'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNotification } from './contexts/NotificationContext'
+import LoginForm from './components/LoginForm'
 
 import { useUser } from './contexts/UserContext'
 
@@ -17,8 +19,7 @@ import { Routes, Route, Link, useMatch, useNavigate } from 'react-router-dom'
 const App = () => {
   const [notification, setNotification] = useNotification()
   const { state, dispatch } = useUser()
-  const { user, username, password } = state
-  const [comment, setComment] = useState('')
+  const { user } = state
   const navigate = useNavigate()
 
   const queryClient = useQueryClient()
@@ -51,49 +52,10 @@ const App = () => {
     }
   }, [dispatch])
 
-  const handleLogin = async (event) => {
-    event.preventDefault()
-    try {
-      const user = await loginService.login({ username, password })
-      window.localStorage.setItem('loggedBlogUser', JSON.stringify(user))
-      blogService.setToken(user.token)
-      dispatch({ type: 'SET_USER', payload: user })
-      dispatch({ type: 'SET_USERNAME', payload: '' })
-      dispatch({ type: 'SET_PASSWORD', payload: '' })
-    } catch (error) {
-      const messageObject = {
-        text: 'Wrong username or password',
-        type: 'error'
-      }
-      setNotification(messageObject)
-    }
-  }
-  const addCommentMutation = useMutation({
-    mutationFn: async ({ id, comment }) => {
-      return await blogService.addComment(id, comment)
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['blogs'] })
-    }
-  })
-  const handleComment = async (event, id) => {
-    event.preventDefault()
-    try {
-      await addCommentMutation.mutateAsync({ id, comment })
-      setComment('')
-      console.log(blogs)
-    } catch (error) {
-      const messageObject = {
-        text: 'Error adding comment',
-        type: 'error'
-      }
-      setNotification(messageObject)
-    }
-  }
-
   const handleLogout = (event) => {
     window.localStorage.removeItem('loggedBlogUser')
     dispatch({ type: 'CLEAR_USER' })
+    navigate("/")
   }
 
   const createBlog = async (blogObject) => {
@@ -112,41 +74,6 @@ const App = () => {
       setNotification(messageObject)
     }
   }
-  const loginForm = () => (
-    <div>
-      <Notification message={notification} />
-
-      <form onSubmit={handleLogin}>
-        <div>
-          username
-          <input
-            data-testid="username"
-            type="text"
-            value={username}
-            name="Username"
-            onChange={({ target }) =>
-              dispatch({ type: 'SET_USERNAME', payload: target.value })
-            }
-          />
-        </div>
-        <div>
-          password
-          <input
-            data-testid="password"
-            type="password"
-            value={password}
-            name="Password"
-            onChange={({ target }) =>
-              dispatch({ type: 'SET_PASSWORD', payload: target.value })
-            }
-          />
-        </div>
-        <button type="submit" name="login">
-          login
-        </button>
-      </form>
-    </div>
-  )
   const handleLikes = async (id) => {
     const likedBlog = blogs.find((blog) => blog.id === id)
     if (!likedBlog) {
@@ -193,7 +120,7 @@ const App = () => {
   const blog = match ? blogs?.find((blog) => blog.id === match.params.id) : null
 
   if (!user) {
-    return loginForm()
+    return <LoginForm/>
   }
   if (isLoading) {
     return <div>Loading...</div>
@@ -233,49 +160,7 @@ const App = () => {
         <Route
           path="/blogs/:id"
           element={
-            blog && (
-              <>
-                <h1>
-                  {blog.title} by {blog.author}
-                </h1>
-                <div>{blog.url}</div>
-                <div>
-                  likes {blog.likes}
-                  <button name="like" onClick={() => handleLikes(blog.id)}>
-                    like
-                  </button>
-                </div>
-                {blog.user.name === user.name && (
-                  <button name="remove" onClick={() => deleteBlog(blog.id)}>
-                    remove
-                  </button>
-                )}
-                <div>
-                  {blog.user ? (
-                    <>
-                      <div>added by {blog.user.name}</div>
-                    </>
-                  ) : (
-                    <p>No user information available</p>
-                  )}
-                </div>
-                <h2>comments</h2>
-                <form onSubmit={(event) => handleComment(event, blog.id)}>
-                  <input
-                    name="comment"
-                    value={comment}
-                    onChange={({ target }) => setComment(target.value)}
-                  />
-                  <button type="submit">add comment</button>
-                </form>
-                <ul>
-                  {blog.comments &&
-                    blog.comments.map((comment, index) => (
-                      <li key={index}>{comment}</li>
-                    ))}
-                </ul>
-              </>
-            )
+            blog && <BlogDetail blog={blog} showRemove={blog.user.name === user.name} handleLikes={handleLikes} deleteBlog={deleteBlog} setNotification={setNotification}/>
           }
         />
       </Routes>
