@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import userService from '../services/users'
 import { Routes, Route, Link, useMatch } from 'react-router-dom'
+import { Table, ListGroup } from 'react-bootstrap'
 
 const User = ({ user }) => {
   if (!user) return <div>User not found</div>
@@ -8,11 +9,11 @@ const User = ({ user }) => {
     <div>
       <h1>{user.name}</h1>
       <h2>Added blogs</h2>
-      <ul>
+      <ListGroup>
         {user.blogs.map((blog) => (
-          <li key={blog.id}>{blog.title}</li>
+          <ListGroup.Item key={blog.id}>{blog.title}</ListGroup.Item>
         ))}
-      </ul>
+      </ListGroup>
     </div>
   )
 }
@@ -45,7 +46,7 @@ const UserList = () => {
           element={
             <>
               <h2>Users</h2>
-              <table>
+              <Table striped>
                 <thead>
                   <tr>
                     <th>Username</th>
@@ -62,7 +63,7 @@ const UserList = () => {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Table>
             </>
           }
         />

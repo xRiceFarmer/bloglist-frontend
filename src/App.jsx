@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import Blog from './components/Blog'
 import BlogDetail from './components/BlogDetail'
 import blogService from './services/blogs'
-import loginService from './services/login'
 import Notification from './components/Notification'
 import Togglable from './components/Togglable'
 import BlogForm from './components/BlogForm'
@@ -15,6 +14,8 @@ import { useUser } from './contexts/UserContext'
 import UserList from './components/UserList'
 
 import { Routes, Route, Link, useMatch, useNavigate } from 'react-router-dom'
+
+import { Navbar, Container, Nav } from 'react-bootstrap'
 
 const App = () => {
   const [notification, setNotification] = useNotification()
@@ -131,19 +132,36 @@ const App = () => {
   }
 
   return (
-    <div>
-      <nav>
-        <Link to="/">Home</Link>
-        <Link to="/users">Users</Link>
-        {user && (
-          <div>
-            <p>{user.name} logged in</p>
-            <button onClick={handleLogout}>logout</button>
-          </div>
-        )}
-      </nav>
+    <div className='container'>
+      <Navbar expand="lg" className="bg-body-tertiary">
+        <Container>
+          <Navbar.Brand to="/">
+          Blog App
+          </Navbar.Brand>    
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Collapse id="basic-navbar-nav">
+            <Nav className='me-auto'>
+              <Nav.Link as={Link} to="/">
+                Home
+              </Nav.Link>
+              <Nav.Link as={Link} to="/users">
+                Users
+              </Nav.Link>
+              <Nav.Link href="">
+                {
+                  user
+                  ? <div>
+                  <em>{user.name} logged in</em>
+                  <button onClick={handleLogout}>logout</button>
+                </div>
+                : <div>Login</div>
+                }
+              </Nav.Link>
+            </Nav>
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
       <Notification message={notification} />
-      <h2>blogs app</h2>
       <Routes>
         <Route path="/users/*" element={<UserList />} />
         <Route
@@ -153,7 +171,7 @@ const App = () => {
               <Togglable buttonLabel="new blog">
                 <BlogForm createBlog={createBlog} />
               </Togglable>
-              {blogs && blogs.map((blog) => <Blog key={blog.id} blog={blog} />)}
+              {blogs && <Blog blogs={blogs}/>}
             </>
           }
         />

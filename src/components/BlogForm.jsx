@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Form, Button } from 'react-bootstrap'
 const BlogForm = ({ createBlog }) => {
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
@@ -19,10 +20,12 @@ const BlogForm = ({ createBlog }) => {
   return (
     <div>
       <h2>create new</h2>
-      <form onSubmit={addBlog}>
-        <div>
+      <Form onSubmit={addBlog}>
+        <Form.Group>
+          <Form.Label>
           Title:
-          <input
+          </Form.Label>
+          <Form.Control
             type="text"
             data-testid='title'
             value={title}
@@ -30,10 +33,12 @@ const BlogForm = ({ createBlog }) => {
             placeholder='Title'
             onChange={({ target }) => setTitle(target.value)}
           />
-        </div>
-        <div>
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>
           Author:
-          <input
+          </Form.Label>
+          <Form.Control
             type="text"
             data-testid='author'
             value={author}
@@ -41,10 +46,12 @@ const BlogForm = ({ createBlog }) => {
             placeholder='Author'
             onChange={({ target }) => setAuthor(target.value)}
           />
-        </div>
-        <div>
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>
           URL:
-          <input
+          </Form.Label>
+          <Form.Control
             type="text"
             data-testid='url'
             value={url}
@@ -52,9 +59,9 @@ const BlogForm = ({ createBlog }) => {
             placeholder='URL'
             onChange={({ target }) => setUrl(target.value)}
           />
-        </div>
-        <button type="submit" name="create">create</button>
-      </form>
+        </Form.Group>
+        <Button variant="primary" type="submit" name="create">create</Button>
+      </Form>
     </div>
   )
 }
