@@ -3,6 +3,7 @@ import { useNotification } from '../contexts/NotificationContext'
 import loginService from '../services/login'
 import blogService from '../services/blogs'
 import Notification from './Notification'
+import { Form, Button } from 'react-bootstrap'
 
 const LoginForm = () => {
   const [notification, setNotification] = useNotification()
@@ -26,13 +27,14 @@ const LoginForm = () => {
     }
   }
   return (
-    <div>
+    <div className='container'>
       <Notification message={notification} />
-
-      <form onSubmit={handleLogin}>
-        <div>
-          username
-          <input
+      <Form onSubmit={handleLogin}>
+        <Form.Group>
+          <Form.Label>
+            username
+          </Form.Label>
+          <Form.Control
             data-testid="username"
             type="text"
             value={username}
@@ -41,10 +43,12 @@ const LoginForm = () => {
               dispatch({ type: 'SET_USERNAME', payload: target.value })
             }
           />
-        </div>
-        <div>
-          password
-          <input
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>
+            password
+          </Form.Label>
+          <Form.Control
             data-testid="password"
             type="password"
             value={password}
@@ -53,11 +57,11 @@ const LoginForm = () => {
               dispatch({ type: 'SET_PASSWORD', payload: target.value })
             }
           />
-        </div>
-        <button type="submit" name="login">
+        </Form.Group>
+        <Button variant='primary' type="submit" name="login">
           login
-        </button>
-      </form>
+        </Button>
+      </Form>
     </div>
   )
 }
